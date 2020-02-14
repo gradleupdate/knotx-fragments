@@ -16,20 +16,27 @@
 package io.knotx.fragments.engine;
 
 import io.knotx.fragments.engine.graph.Node;
+import io.vertx.core.json.JsonObject;
 import java.util.Optional;
 
 public class Task {
 
   private final String name;
   private final Node rootNode;
+  private final JsonObject metadata;
 
   public Task(String name) {
     this(name, null);
   }
 
   public Task(String name, Node rootNode) {
+    this(name, rootNode, new JsonObject());
+  }
+
+  public Task(String name, Node rootNode, JsonObject metadata) {
     this.name = name;
     this.rootNode = rootNode;
+    this.metadata = metadata;
   }
 
   public Optional<Node> getRootNode() {
@@ -40,11 +47,16 @@ public class Task {
     return name;
   }
 
+  public JsonObject getMetadata() {
+    return metadata;
+  }
+
   @Override
   public String toString() {
     return "Task{" +
         "name='" + name + '\'' +
         ", rootNode=" + rootNode +
+        ", metadata=" + metadata +
         '}';
   }
 }

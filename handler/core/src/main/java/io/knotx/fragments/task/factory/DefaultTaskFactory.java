@@ -15,11 +15,11 @@
  */
 package io.knotx.fragments.task.factory;
 
-import io.knotx.fragments.handler.api.exception.ConfigurationException;
 import io.knotx.fragments.api.Fragment;
 import io.knotx.fragments.engine.FragmentEventContext;
 import io.knotx.fragments.engine.Task;
 import io.knotx.fragments.engine.graph.Node;
+import io.knotx.fragments.handler.api.exception.ConfigurationException;
 import io.knotx.fragments.task.TaskFactory;
 import io.knotx.fragments.task.exception.NodeFactoryNotFoundException;
 import io.knotx.fragments.task.factory.node.NodeFactory;
@@ -37,7 +37,7 @@ import java.util.stream.StreamSupport;
 
 public class DefaultTaskFactory implements TaskFactory, NodeProvider {
 
-  public static final String NAME = "default";
+  private static final String NAME = "default";
 
   private DefaultTaskFactoryConfig taskFactoryConfig;
   private Map<String, NodeFactory> nodeFactories;
@@ -77,7 +77,8 @@ public class DefaultTaskFactory implements TaskFactory, NodeProvider {
     return Optional.ofNullable(tasks.get(taskName))
         .map(rootGraphNodeOptions -> {
           Node rootNode = initNode(rootGraphNodeOptions);
-          return new Task(taskName, rootNode);
+          JsonObject metadata = getMetadataForNode(rootGraphNodeOptions);
+          return new Task(taskName, rootNode, metadata);
         })
         .orElseThrow(() -> new ConfigurationException("Task [" + taskName + "] not configured!"));
   }
@@ -87,6 +88,25 @@ public class DefaultTaskFactory implements TaskFactory, NodeProvider {
     return findNodeFactory(nodeOptions)
         .map(f -> f.initNode(nodeOptions, initTransitions(nodeOptions), this))
         .orElseThrow(() -> new NodeFactoryNotFoundException(nodeOptions.getNode().getFactory()));
+  }
+
+  @Override
+  public JsonObject getMetadataForNode(GraphNodeOptions graphNodeOptions) {
+    return findNodeFactory(graphNodeOptions)
+        .map(f -> f.getNodeMetadata(graphNodeOptions, this))
+        .map(metadata -> addTransitionsRecursively(metadata, graphNodeOptions))
+        .orElseGet(JsonObject::new);
+  }
+
+  private JsonObject addTransitionsRecursively(JsonObject metadata, GraphNodeOptions nodeOptions) {
+    Map<String, GraphNodeOptions> transitions = nodeOptions.getOnTransitions();
+    if (!transitions.isEmpty()) {
+      JsonObject transitionMetadata = new JsonObject();
+      transitions.forEach((transitionName, nextNode) -> transitionMetadata
+          .put(transitionName, getMetadataForNode(nextNode)));
+      metadata.put("transitions", transitionMetadata);
+    }
+    return metadata;
   }
 
   private Optional<NodeFactory> findNodeFactory(GraphNodeOptions nodeOptions) {

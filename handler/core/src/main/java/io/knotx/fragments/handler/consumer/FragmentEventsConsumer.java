@@ -15,6 +15,7 @@
  */
 package io.knotx.fragments.handler.consumer;
 
+import io.knotx.fragments.engine.FragmentEventWithTaskMetadata;
 import io.knotx.server.api.context.ClientRequest;
 import java.util.List;
 
@@ -30,8 +31,8 @@ public interface FragmentEventsConsumer {
    * Gets a list of processed and unprocessed fragments.
    *
    * @param clientRequest - client request
-   * @param fragmentEvents - all fragment events
+   * @param fragmentEventsWithMetadata - all fragment events with task metadata
    */
-  void accept(ClientRequest clientRequest, List<FragmentEvent> fragmentEvents);
+  void accept(ClientRequest clientRequest, List<FragmentEventWithTaskMetadata> fragmentEventsWithMetadata);
 
 }
